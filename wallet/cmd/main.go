@@ -10,11 +10,11 @@ import (
 )
 
 func main() {
-
+	log.Println("Starting server on port 8000...")
 	r := mux.NewRouter()
 	r.Use(middleware.LoggingMiddleware)
 
-	routes.HelloWorldRoute(r)
+	routes.WalletRoute(r)
 
 	srv := &http.Server{
 		Handler:      r,
