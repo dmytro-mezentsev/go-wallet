@@ -1,0 +1,10 @@
+version: "3.7"
+services:
+  postgres:
+    image: postgres:14.1-alpine
+    ports:
+      - "${PG_PORT}:5432"
+    environment:
+      - POSTGRES_USER=${PG_USER}
+      - POSTGRES_PASSWORD=${PG_PASSWORD}
+      - POSTGRES_DB=wallet_db

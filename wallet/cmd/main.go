@@ -7,13 +7,19 @@ import (
 	"time"
 	"wallet.com/wallet/wallet/internal/api/middleware"
 	"wallet.com/wallet/wallet/internal/api/routes"
+	"wallet.com/wallet/wallet/internal/config"
+	"wallet.com/wallet/wallet/internal/db"
 )
 
 func main() {
 	log.Println("Starting server on port 8000...")
+
+	config := config.GetConfig()
+	dbConnection := db.DBConnection(config.Db)
+	db.MigrateSchemas(*dbConnection, config.Db.DBName)
+
 	r := mux.NewRouter()
 	r.Use(middleware.LoggingMiddleware)
-
 	routes.WalletRoute(r)
 
 	srv := &http.Server{
