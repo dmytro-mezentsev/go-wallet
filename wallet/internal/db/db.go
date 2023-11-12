@@ -10,7 +10,6 @@ import (
 )
 
 func DBConnection(conf config.DbConf) *gorm.DB {
-
 	dsn := url.URL{
 		User:     url.UserPassword(conf.User, conf.Password),
 		Scheme:   "postgres",
@@ -20,7 +19,7 @@ func DBConnection(conf config.DbConf) *gorm.DB {
 	}
 	db, err := gorm.Open(postgres.Open(dsn.String()), &gorm.Config{})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("can't connect to db: ", err)
 	}
 	return db
 

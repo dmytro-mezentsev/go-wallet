@@ -13,22 +13,22 @@ import (
 func MigrateSchemas(db *gorm.DB, dbName string) {
 	sqlDB, err := db.DB()
 	if err != nil {
-		log.Fatal("can't get sql.DB from gorm.DB", err)
+		log.Fatal("can't get sql.DB from gorm.DB: ", err)
 	}
 
 	driver, err := postgres.WithInstance(sqlDB, &postgres.Config{})
 	if err != nil {
-		log.Fatal("can't get driver", err)
+		log.Fatal("can't get driver: ", err)
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://wallet/db/migrations",
 		dbName, driver)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("can't create migration instance: ", err)
 	}
 	err = m.Up()
 	if err != nil && err != migrate.ErrNoChange {
-		log.Fatal(err)
+		log.Fatal("can't migrate schemas: ", err)
 	}
 }

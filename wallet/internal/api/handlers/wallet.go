@@ -3,22 +3,24 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
 	"wallet.com/wallet/wallet/internal/data"
 )
 
-type Wallet struct {
+type WalletResp struct {
 	WalletId string  `json:"walletId"`
 	Amount   float64 `json:"amount"`
 }
 
-type WalletsResponse struct {
-	Wallets []Wallet `json:"wallets"`
+type WalletsResp struct {
+	Wallets []WalletResp `json:"wallets"`
 }
 
 type WalletStorageI interface {
 	Save(wallets []data.Wallet) ([]data.Wallet, error)
+	Get(walletId string) (data.Wallet, error)
 }
 
 type WalletHandler struct {
@@ -26,19 +28,19 @@ type WalletHandler struct {
 }
 
 func (wh WalletHandler) PostWalletHandler(w http.ResponseWriter, r *http.Request) {
-	//validate count
 	var count int
 	if strCount := r.FormValue("count"); strCount == "" {
 		count = 1
 	} else {
+		//validate count
 		var err error
 		count, err = strconv.Atoi(strCount)
 		if err != nil {
-			http.Error(w, "invalid count", http.StatusBadRequest)
+			http.Error(w, ErrorResponse("invalid count"), http.StatusBadRequest)
 			return
 		}
 		if count > 10 {
-			http.Error(w, "count can't be more then 10", http.StatusBadRequest)
+			http.Error(w, ErrorResponse("count can't be more then 10"), http.StatusBadRequest)
 			return
 		}
 	}
@@ -52,19 +54,19 @@ func (wh WalletHandler) PostWalletHandler(w http.ResponseWriter, r *http.Request
 	}
 	wh.WalletStorage.Save(walletDatas)
 
-	var wallets = make([]Wallet, count)
+	var wallets = make([]WalletResp, count)
 	for i, w := range walletDatas {
-		wallets[i] = Wallet{
+		wallets[i] = WalletResp{
 			WalletId: w.ID,
 			Amount:   w.Amount,
 		}
 	}
-	response := WalletsResponse{
+	response := WalletsResp{
 		Wallets: wallets,
 	}
 	responseJSON, err := json.Marshal(response)
 	if err != nil {
-		http.Error(w, "", http.StatusInternalServerError)
+		http.Error(w, InternalErrorResponse(), http.StatusInternalServerError)
 		return
 	}
 
@@ -72,6 +74,46 @@ func (wh WalletHandler) PostWalletHandler(w http.ResponseWriter, r *http.Request
 	_, err = w.Write(responseJSON)
 	if err != nil {
 		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (wh WalletHandler) GetWalletHandler(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	walletId := vars["walletId"]
+
+	if walletId == "" {
+		http.Error(w, ErrorResponse("walletId is required"), http.StatusBadRequest)
+		return
+	}
+	//validate walletId
+	_, err := uuid.Parse(walletId)
+	if err != nil {
+		http.Error(w, ErrorResponse("invalid walletId"), http.StatusBadRequest)
+		return
+	}
+
+	walletData, err := wh.WalletStorage.Get(walletId)
+	if err != nil {
+		http.Error(w, ErrorResponse("wallet not found"), http.StatusNotFound)
+		return
+	}
+	response := WalletResp{
+		WalletId: walletData.ID,
+		Amount:   walletData.Amount,
+	}
+
+	responseJSON, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, InternalErrorResponse(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(responseJSON)
+	if err != nil {
+		http.Error(w, ErrorResponse("Internal error"), http.StatusInternalServerError)
 		return
 	}
 }

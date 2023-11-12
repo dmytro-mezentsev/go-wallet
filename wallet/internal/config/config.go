@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"gopkg.in/yaml.v3"
 	"log"
 	"os"
@@ -22,14 +21,13 @@ type DbConf struct {
 func GetConfig() Config {
 	confContent, err := os.ReadFile("wallet/config/config.yaml")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("can't read config file: ", err)
 	}
 	// expand environment variables
 	confContent = []byte(os.ExpandEnv(string(confContent)))
 	conf := &Config{}
 	if err := yaml.Unmarshal(confContent, conf); err != nil {
-		panic(err)
+		log.Fatal("can't unmarshal config file: ", err)
 	}
-	fmt.Printf("config: %v\n", conf)
 	return *conf
 }
