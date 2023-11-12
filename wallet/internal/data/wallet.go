@@ -11,7 +11,7 @@ type WalletStorage struct {
 	DB *gorm.DB
 }
 
-func (w *WalletStorage) Save(wallet Wallet) (Wallet, error) {
-	result := w.DB.Create(&wallet)
-	return wallet, result.Error
+func (w *WalletStorage) Save(wallets []Wallet) ([]Wallet, error) {
+	result := w.DB.CreateInBatches(wallets, len(wallets))
+	return wallets, result.Error
 }
