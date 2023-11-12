@@ -5,7 +5,6 @@ import (
 	"wallet.com/wallet/wallet/internal/api/handlers"
 )
 
-func WalletRoute(r *mux.Router) {
-	r.HandleFunc("/wallet", handlers.CreateWalletHandler).
-		Methods("POST")
+func WalletRoute(r *mux.Router, walletHandler handlers.WalletHandler) {
+	r.HandleFunc("/wallet", walletHandler.PostWalletHandler).Methods("POST")
 }

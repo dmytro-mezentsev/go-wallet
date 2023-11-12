@@ -1,30 +1,33 @@
 package handlers
 
 import (
-	"bytes"
 	"encoding/json"
 	"github.com/google/uuid"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"wallet.com/wallet/wallet/internal/data"
 )
 
-func TestCreateWalletHandler(t *testing.T) {
-	requestBody := CreateWalletRequest{
-		UserId: "testUser",
-	}
-	requestJSON, err := json.Marshal(requestBody)
-	if err != nil {
-		t.Fatalf("Error marshaling JSON request: %v", err)
-	}
+// init mock
+type WalletStorageMock struct {
+}
 
-	request, err := http.NewRequest("POST", "/wallet", bytes.NewBuffer(requestJSON))
+func (wst WalletStorageMock) Save(wallet data.Wallet) (data.Wallet, error) {
+	return wallet, nil
+}
+
+func TestCreateWalletHandler(t *testing.T) {
+
+	walletHandler := WalletHandler{WalletStorage: WalletStorageMock{}}
+
+	request, err := http.NewRequest("POST", "/wallet", nil)
 	if err != nil {
 		t.Fatalf("Error creating request: %v", err)
 	}
 
 	responseRecorder := httptest.NewRecorder()
-	CreateWalletHandler(responseRecorder, request)
+	walletHandler.PostWalletHandler(responseRecorder, request)
 
 	// Check the response status code
 	if status := responseRecorder.Code; status != http.StatusOK {
@@ -37,12 +40,10 @@ func TestCreateWalletHandler(t *testing.T) {
 		t.Fatalf("Error unmarshaling JSON response: %v", err)
 	}
 
-	// Check the response fields
-	if response.UserId != requestBody.UserId {
-		t.Errorf("Handler returned unexpected user ID: got %v want %v", response.UserId, requestBody.UserId)
-	}
+	// Check walletId is a valid UUID, else panic
+	uuid.MustParse(response.WalletId)
 
-	if _, err := uuid.Parse(response.WalletId); err != nil {
-		t.Errorf("Handler returned invalid Wallet ID: %v", err)
+	if response.Amount != 0.0 {
+		t.Errorf("Invalid amount: %v", response.Amount)
 	}
 }

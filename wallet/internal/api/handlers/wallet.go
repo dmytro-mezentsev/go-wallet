@@ -4,40 +4,46 @@ import (
 	"encoding/json"
 	"github.com/google/uuid"
 	"net/http"
+	"wallet.com/wallet/wallet/internal/data"
 )
 
-type CreateWalletRequest struct {
-	UserId string `json:"userId"`
-}
 type CreateWalletResponse struct {
-	UserId   string `json:"userId"`
-	WalletId string `json:"walletId"`
+	WalletId string  `json:"walletId"`
+	Amount   float64 `json:"amount"`
 }
 
-func CreateWalletHandler(w http.ResponseWriter, r *http.Request) {
+type WalletStorageI interface {
+	Save(wallet data.Wallet) (data.Wallet, error)
+}
 
-	var createWalletRequest CreateWalletRequest
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&createWalletRequest); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+type WalletHandler struct {
+	WalletStorage WalletStorageI
+}
+
+func (wh WalletHandler) PostWalletHandler(w http.ResponseWriter, r *http.Request) {
+
+	wallet, err := wh.WalletStorage.Save(data.Wallet{
+		ID:     uuid.NewString(),
+		Amount: 0.0,
+	})
+	if err != nil {
+		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
-
-	createWalletResponse := CreateWalletResponse{
-		UserId:   createWalletRequest.UserId,
-		WalletId: uuid.NewString(),
+	response := CreateWalletResponse{
+		WalletId: wallet.ID,
+		Amount:   wallet.Amount,
 	}
-
-	responseJSON, err := json.Marshal(createWalletResponse)
+	responseJSON, err := json.Marshal(response)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(responseJSON)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
 }

@@ -5,9 +5,11 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"wallet.com/wallet/wallet/internal/api/handlers"
 	"wallet.com/wallet/wallet/internal/api/middleware"
 	"wallet.com/wallet/wallet/internal/api/routes"
 	"wallet.com/wallet/wallet/internal/config"
+	"wallet.com/wallet/wallet/internal/data"
 	"wallet.com/wallet/wallet/internal/db"
 )
 
@@ -16,11 +18,15 @@ func main() {
 
 	config := config.GetConfig()
 	dbConnection := db.DBConnection(config.Db)
-	db.MigrateSchemas(*dbConnection, config.Db.DBName)
+	db.MigrateSchemas(dbConnection, config.Db.DBName)
 
 	r := mux.NewRouter()
 	r.Use(middleware.LoggingMiddleware)
-	routes.WalletRoute(r)
+
+	walletStorage := data.WalletStorage{DB: dbConnection}
+	walletHandler := handlers.WalletHandler{WalletStorage: walletStorage}
+
+	routes.WalletRoute(r, walletHandler)
 
 	srv := &http.Server{
 		Handler:      r,

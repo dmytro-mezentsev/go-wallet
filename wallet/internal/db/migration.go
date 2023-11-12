@@ -10,7 +10,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
-func MigrateSchemas(db gorm.DB, dbName string) {
+func MigrateSchemas(db *gorm.DB, dbName string) {
 	sqlDB, err := db.DB()
 	if err != nil {
 		log.Fatal(err)
@@ -28,7 +28,7 @@ func MigrateSchemas(db gorm.DB, dbName string) {
 		log.Fatal(err)
 	}
 	err = m.Up()
-	if err != nil {
+	if err != nil && err != migrate.ErrNoChange {
 		log.Fatal(err)
 	}
 }
