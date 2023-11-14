@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/shopspring/decimal"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -13,7 +14,7 @@ import (
 )
 
 type WalletStorageMock struct {
-	mockedAmount float64
+	mockedAmount decimal.Decimal
 }
 
 func (wst WalletStorageMock) Save(wallets []data.Wallet) ([]data.Wallet, error) {
@@ -52,7 +53,7 @@ func TestPostWalletHandlerWithOneWallet(t *testing.T) {
 	// Check walletId is a valid UUID, else panic
 	uuid.MustParse(response.Wallets[0].WalletId)
 
-	if response.Wallets[0].Amount != 0.0 {
+	if !response.Wallets[0].Amount.IsZero() {
 		t.Errorf("Invalid amount: %v", response.Wallets[0].Amount)
 	}
 }
@@ -87,7 +88,7 @@ func TestPostWalletHandlerWithTwoWallets(t *testing.T) {
 }
 
 func TestGetWalletHandler(t *testing.T) {
-	amount := 100.0
+	amount := decimal.NewFromFloat(100.0)
 	walletHandler := WalletHandler{WalletStorage: WalletStorageMock{mockedAmount: amount}}
 	walletId := uuid.NewString()
 
@@ -114,15 +115,17 @@ func TestGetWalletHandler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error unmarshaling JSON response: %v", err)
 	}
-	expectedResponse := WalletResp{walletId, amount}
 
-	if response != expectedResponse {
-		t.Errorf("Invalid response: %v", response)
+	if !response.Amount.Equal(amount) {
+		t.Errorf("Invalid amount: %v", response.Amount)
+	}
+	if response.WalletId != walletId {
+		t.Errorf("Invalid walletId: %v", response)
 	}
 
 }
 func TestGetWalletHandlerInvalidWalletId(t *testing.T) {
-	amount := 100.0
+	amount := decimal.NewFromFloat(100.0)
 	walletHandler := WalletHandler{WalletStorage: WalletStorageMock{mockedAmount: amount}}
 	walletId := "invalid"
 

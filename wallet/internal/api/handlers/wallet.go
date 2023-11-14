@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/shopspring/decimal"
 	"net/http"
 	"strconv"
 	"wallet.com/wallet/wallet/internal/data"
 )
 
 type WalletResp struct {
-	WalletId string  `json:"walletId"`
-	Amount   float64 `json:"amount"`
+	WalletId string          `json:"walletId"`
+	Amount   decimal.Decimal `json:"amount"`
 }
 
 type WalletsResp struct {
@@ -49,7 +50,7 @@ func (wh WalletHandler) PostWalletHandler(w http.ResponseWriter, r *http.Request
 	for i := 0; i < count; i++ {
 		walletDatas[i] = data.Wallet{
 			Id:     uuid.NewString(),
-			Amount: 0.0,
+			Amount: decimal.Zero,
 		}
 	}
 	wh.WalletStorage.Save(walletDatas)

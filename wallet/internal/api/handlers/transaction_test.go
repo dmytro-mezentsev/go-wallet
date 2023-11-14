@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/shopspring/decimal"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -22,7 +23,7 @@ func (mts MockTransactionStorage) Save(transaction data.Transaction) (data.Trans
 }
 
 type MockWalletStorage struct {
-	amount float64
+	amount decimal.Decimal
 }
 
 func (mws MockWalletStorage) Get(walletId string) (data.Wallet, error) {
@@ -35,7 +36,7 @@ func (mws MockWalletStorage) Save(wallets []data.Wallet) ([]data.Wallet, error) 
 func TestPostTransactionHandler(t *testing.T) {
 	requestBody := TransactionReq{
 		WalletId:              "some_wallet_id",
-		Amount:                50.0,
+		Amount:                decimal.NewFromFloat(50.0),
 		TransactionType:       data.Deposit,
 		FromPaymentSystem:     "Bank",
 		FromPaymentIdentifier: "bank_account_123",
@@ -57,7 +58,7 @@ func TestPostTransactionHandler(t *testing.T) {
 
 	// Create mocks
 	mockTransactionStorage := MockTransactionStorage{}
-	mockWalletStorage := MockWalletStorage{100}
+	mockWalletStorage := MockWalletStorage{decimal.NewFromFloat(100)}
 
 	handler := TransactionHandler{
 		TransactionStorage: mockTransactionStorage,
@@ -81,8 +82,9 @@ func TestPostTransactionHandler(t *testing.T) {
 		t.Error("Expected non-empty transaction ID")
 	}
 	//check balance
-	if response.Balance != 150.0 {
-		t.Errorf("Expected balance %v, got %v", 50.0, response.Balance)
+	expectedBalance := decimal.NewFromFloat(150.0)
+	if !response.Balance.Equal(expectedBalance) {
+		t.Errorf("Expected balance %v, got %v", expectedBalance, response.Balance)
 	}
 	if response.CreatedAt.IsZero() {
 		t.Error("Expected non-zero created timestamp")
@@ -92,7 +94,7 @@ func TestPostTransactionHandler(t *testing.T) {
 func TestPostTransactionHandlerInsufficientFunds(t *testing.T) {
 	requestBody := TransactionReq{
 		WalletId:              "some_wallet_id",
-		Amount:                150.0,
+		Amount:                decimal.NewFromFloat(150.0),
 		TransactionType:       data.Withdraw,
 		FromPaymentSystem:     "Bank",
 		FromPaymentIdentifier: "bank_account_123",
@@ -114,7 +116,7 @@ func TestPostTransactionHandlerInsufficientFunds(t *testing.T) {
 
 	// Create mocks
 	mockTransactionStorage := MockTransactionStorage{}
-	mockWalletStorage := MockWalletStorage{100}
+	mockWalletStorage := MockWalletStorage{decimal.NewFromFloat(100)}
 
 	handler := TransactionHandler{
 		TransactionStorage: mockTransactionStorage,
@@ -139,7 +141,7 @@ func TestPostTransactionHandlerInsufficientFunds(t *testing.T) {
 func TestPostTransactionHandlerConflictError(t *testing.T) {
 	requestBody := TransactionReq{
 		WalletId:              "some_wallet_id",
-		Amount:                50.0,
+		Amount:                decimal.NewFromFloat(50.0),
 		TransactionType:       data.Withdraw,
 		FromPaymentSystem:     "Bank",
 		FromPaymentIdentifier: "bank_account_123",
@@ -161,7 +163,7 @@ func TestPostTransactionHandlerConflictError(t *testing.T) {
 
 	// Create mocks
 	mockTransactionStorage := MockTransactionStorage{err: data.BalanceWasChangedError("during transaction balance was changed")}
-	mockWalletStorage := MockWalletStorage{100}
+	mockWalletStorage := MockWalletStorage{decimal.NewFromFloat(100)}
 
 	handler := TransactionHandler{
 		TransactionStorage: mockTransactionStorage,

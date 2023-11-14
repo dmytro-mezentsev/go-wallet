@@ -1,6 +1,7 @@
 package data
 
 import (
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 	"time"
 )
@@ -15,10 +16,10 @@ const (
 type Transaction struct {
 	Id                    string `gorm:"primaryKey"`
 	WalletId              string
-	Amount                float64
+	Amount                decimal.Decimal
 	TransactionType       TransactionType
-	AmountBefore          float64
-	AmountAfter           float64
+	AmountBefore          decimal.Decimal
+	AmountAfter           decimal.Decimal
 	FromPaymentSystem     string
 	FromPaymentIdentifier string
 	ToPaymentSystem       string

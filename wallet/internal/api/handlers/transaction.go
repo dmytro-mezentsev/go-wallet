@@ -3,8 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"log"
-	"math"
 	"net/http"
 	"time"
 	"wallet.com/wallet/wallet/internal/data"
@@ -12,7 +12,7 @@ import (
 
 type TransactionReq struct {
 	WalletId              string               `json:"walletId"`
-	Amount                float64              `json:"amount"`
+	Amount                decimal.Decimal      `json:"amount"`
 	TransactionType       data.TransactionType `json:"transactionType"`
 	FromPaymentSystem     string               `json:"fromPaymentSystem"`
 	FromPaymentIdentifier string               `json:"fromPaymentIdentifier"`
@@ -22,9 +22,9 @@ type TransactionReq struct {
 	Description           string               `json:"description"`
 }
 type TransactionResp struct {
-	Id        string    `json:"id"`
-	Balance   float64   `json:"balance"`
-	CreatedAt time.Time `json:"createdAt"`
+	Id        string          `json:"id"`
+	Balance   decimal.Decimal `json:"balance"`
+	CreatedAt time.Time       `json:"createdAt"`
 }
 
 type TransactionStorageI interface {
@@ -47,17 +47,17 @@ func (th TransactionHandler) PostTransactionHandler(w http.ResponseWriter, r *ht
 		http.Error(w, ErrorResponse("wallet not found"), http.StatusNotFound)
 		return
 	}
-	if transactionReq.TransactionType == data.Withdraw && wallet.Amount < transactionReq.Amount {
+	if transactionReq.TransactionType == data.Withdraw && wallet.Amount.LessThan(transactionReq.Amount) {
 		http.Error(w, ErrorResponse("Insufficient funds"), http.StatusPaymentRequired)
 		return
 	}
 
-	amountBefore := wallet.Amount
-	var amountAfter float64
+	amountBefore := wallet.Amount.RoundFloor(4)
+	var amountAfter decimal.Decimal
 	if transactionReq.TransactionType == data.Withdraw {
-		amountAfter = wallet.Amount - transactionReq.Amount
+		amountAfter = wallet.Amount.Sub(transactionReq.Amount)
 	} else {
-		amountAfter = wallet.Amount + transactionReq.Amount
+		amountAfter = wallet.Amount.Add(transactionReq.Amount)
 	}
 	transaction := data.Transaction{
 		Id:                    uuid.NewString(),
@@ -90,7 +90,7 @@ func (th TransactionHandler) PostTransactionHandler(w http.ResponseWriter, r *ht
 
 	response := TransactionResp{
 		Id:        result.Id,
-		Balance:   math.Floor(result.AmountAfter*100) / 100,
+		Balance:   result.AmountAfter.RoundFloor(2),
 		CreatedAt: result.CreatedAt,
 	}
 	err = json.NewEncoder(w).Encode(response)

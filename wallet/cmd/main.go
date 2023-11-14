@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/shopspring/decimal"
 	"log"
 	"net/http"
 	"time"
@@ -16,6 +17,7 @@ import (
 func main() {
 	log.Println("Starting server on port 8000...")
 
+	decimal.MarshalJSONWithoutQuotes = true
 	config := config.GetConfig()
 	dbConnection := db.DBConnection(config.Db)
 	db.MigrateSchemas(dbConnection, config.Db.DBName)
