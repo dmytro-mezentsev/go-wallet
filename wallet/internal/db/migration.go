@@ -29,6 +29,10 @@ func MigrateSchemas(db *gorm.DB, dbName string) {
 	}
 	err = m.Up()
 	if err != nil && err != migrate.ErrNoChange {
+		version, dirty, _ := m.Version()
+		if dirty {
+			m.Force(int(version - 1))
+		}
 		log.Fatal("can't migrate schemas: ", err)
 	}
 }

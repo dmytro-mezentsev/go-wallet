@@ -48,7 +48,7 @@ func (wh WalletHandler) PostWalletHandler(w http.ResponseWriter, r *http.Request
 
 	for i := 0; i < count; i++ {
 		walletDatas[i] = data.Wallet{
-			ID:     uuid.NewString(),
+			Id:     uuid.NewString(),
 			Amount: 0.0,
 		}
 	}
@@ -57,7 +57,7 @@ func (wh WalletHandler) PostWalletHandler(w http.ResponseWriter, r *http.Request
 	var wallets = make([]WalletResp, count)
 	for i, w := range walletDatas {
 		wallets[i] = WalletResp{
-			WalletId: w.ID,
+			WalletId: w.Id,
 			Amount:   w.Amount,
 		}
 	}
@@ -100,7 +100,7 @@ func (wh WalletHandler) GetWalletHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	response := WalletResp{
-		WalletId: walletData.ID,
+		WalletId: walletData.Id,
 		Amount:   walletData.Amount,
 	}
 

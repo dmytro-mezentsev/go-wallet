@@ -24,9 +24,13 @@ func main() {
 	r.Use(middleware.LoggingMiddleware)
 
 	walletStorage := data.WalletStorage{DB: dbConnection}
+	transactionStorage := data.TransactionStorage{DB: dbConnection}
+
 	walletHandler := handlers.WalletHandler{WalletStorage: &walletStorage}
+	transactionHandler := handlers.TransactionHandler{TransactionStorage: &transactionStorage, WalletStorage: &walletStorage}
 
 	routes.WalletRoute(r, &walletHandler)
+	routes.TransactionRoute(r, &transactionHandler)
 
 	srv := &http.Server{
 		Handler:      r,
