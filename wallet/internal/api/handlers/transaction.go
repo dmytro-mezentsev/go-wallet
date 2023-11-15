@@ -12,6 +12,7 @@ import (
 
 type TransactionReq struct {
 	WalletId              string               `json:"walletId"`
+	UserId                string               `json:"userId"`
 	Amount                decimal.Decimal      `json:"amount"`
 	TransactionType       data.TransactionType `json:"transactionType"`
 	FromPaymentSystem     string               `json:"fromPaymentSystem"`
@@ -61,6 +62,7 @@ func (th TransactionHandler) PostTransactionHandler(w http.ResponseWriter, r *ht
 	}
 	transaction := data.Transaction{
 		Id:                    uuid.NewString(),
+		UserId:                transactionReq.UserId,
 		WalletId:              transactionReq.WalletId,
 		Amount:                transactionReq.Amount,
 		TransactionType:       transactionReq.TransactionType,

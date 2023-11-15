@@ -1,6 +1,7 @@
 CREATE TABLE transactions
 (
     id                      UUID PRIMARY KEY NOT NULL,
+    user_id                 UUID             NOT NULL,
     wallet_id               UUID             NOT NULL,
     transaction_type        TEXT             NOT NULL,
     amount                  numeric(20, 4)   NOT NULL,
@@ -17,3 +18,4 @@ CREATE TABLE transactions
 );
 
 CREATE INDEX transactions_wallet_id_idx ON transactions (wallet_id);
+CREATE INDEX transactions_user_id_idx ON transactions (user_id);

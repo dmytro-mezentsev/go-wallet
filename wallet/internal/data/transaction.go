@@ -15,6 +15,7 @@ const (
 
 type Transaction struct {
 	Id                    string `gorm:"primaryKey"`
+	UserId                string
 	WalletId              string
 	Amount                decimal.Decimal
 	TransactionType       TransactionType

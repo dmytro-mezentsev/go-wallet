@@ -94,6 +94,7 @@ func TestPostTransactionHandler(t *testing.T) {
 func TestPostTransactionHandlerInsufficientFunds(t *testing.T) {
 	requestBody := TransactionReq{
 		WalletId:              "some_wallet_id",
+		UserId:                "some_user_id",
 		Amount:                decimal.NewFromFloat(150.0),
 		TransactionType:       data.Withdraw,
 		FromPaymentSystem:     "Bank",
