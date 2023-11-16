@@ -57,3 +57,9 @@ func (t *TransactionStorage) Save(transaction Transaction) (Transaction, error) 
 
 	return transaction, nil
 }
+
+func (w *TransactionStorage) GetById(transactionId string) (Transaction, error) {
+	var transaction Transaction
+	result := w.DB.First(&transaction, "id = ?", transactionId)
+	return transaction, result.Error
+}

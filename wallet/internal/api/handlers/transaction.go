@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 	"github.com/shopspring/decimal"
 	"log"
 	"net/http"
@@ -27,9 +28,26 @@ type TransactionResp struct {
 	Balance   decimal.Decimal `json:"balance"`
 	CreatedAt time.Time       `json:"createdAt"`
 }
+type TransactionFullResp struct {
+	Id                    string               `json:"id"`
+	UserId                string               `json:"userId"`
+	WalletId              string               `json:"walletId"`
+	Amount                decimal.Decimal      `json:"amount"`
+	TransactionType       data.TransactionType `json:"transactionType"`
+	AmountBefore          decimal.Decimal      `json:"amountBefore"`
+	AmountAfter           decimal.Decimal      `json:"amountAfter"`
+	FromPaymentSystem     string               `json:"fromPaymentSystem"`
+	FromPaymentIdentifier string               `json:"fromPaymentIdentifier"`
+	ToPaymentSystem       string               `json:"toPaymentSystem"`
+	ToPaymentIdentifier   string               `json:"toPaymentIdentifier"`
+	Currency              string               `json:"currency"`
+	Description           string               `json:"description"`
+	CreatedAt             time.Time            `json:"createdAt"`
+}
 
 type TransactionStorageI interface {
 	Save(transaction data.Transaction) (data.Transaction, error)
+	GetById(transactionId string) (data.Transaction, error)
 }
 
 type TransactionHandler struct {
@@ -37,7 +55,7 @@ type TransactionHandler struct {
 	WalletStorage      WalletStorageI
 }
 
-func (th TransactionHandler) PostTransactionHandler(w http.ResponseWriter, r *http.Request) {
+func (th *TransactionHandler) PostTransactionHandler(w http.ResponseWriter, r *http.Request) {
 	var transactionReq TransactionReq
 	if err := json.NewDecoder(r.Body).Decode(&transactionReq); err != nil {
 		http.Error(w, ErrorResponse("invalid json"), http.StatusBadRequest)
@@ -101,5 +119,44 @@ func (th TransactionHandler) PostTransactionHandler(w http.ResponseWriter, r *ht
 		return
 	}
 
+	return
+}
+
+func (th *TransactionHandler) GetTransactionHandler(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	transactionId := vars["transactionId"]
+
+	if transactionId == "" {
+		http.Error(w, ErrorResponse("transactionId is required"), http.StatusBadRequest)
+		return
+	}
+
+	transaction, err := th.TransactionStorage.GetById(transactionId)
+	if err != nil {
+		http.Error(w, ErrorResponse("transaction not found"), http.StatusNotFound)
+		return
+	}
+	response := TransactionFullResp{
+		Id:                    transaction.Id,
+		UserId:                transaction.UserId,
+		WalletId:              transaction.WalletId,
+		Amount:                transaction.Amount,
+		TransactionType:       transaction.TransactionType,
+		AmountBefore:          transaction.AmountBefore,
+		AmountAfter:           transaction.AmountAfter,
+		FromPaymentSystem:     transaction.FromPaymentSystem,
+		FromPaymentIdentifier: transaction.FromPaymentIdentifier,
+		ToPaymentSystem:       transaction.ToPaymentSystem,
+		ToPaymentIdentifier:   transaction.ToPaymentIdentifier,
+		Currency:              transaction.Currency,
+		Description:           transaction.Description,
+		CreatedAt:             transaction.CreatedAt,
+	}
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		http.Error(w, InternalErrorResponse(), http.StatusInternalServerError)
+		return
+	}
 	return
 }

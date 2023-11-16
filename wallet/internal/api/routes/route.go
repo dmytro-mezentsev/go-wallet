@@ -17,4 +17,6 @@ func WalletRoute(r *mux.Router, walletHandler *handlers.WalletHandler) {
 func TransactionRoute(r *mux.Router, transactionHandler *handlers.TransactionHandler) {
 	r.HandleFunc("/transactions", transactionHandler.PostTransactionHandler).
 		Methods("POST")
+	r.HandleFunc("/transactions/{transactionId}", transactionHandler.GetTransactionHandler).
+		Methods("GET")
 }
